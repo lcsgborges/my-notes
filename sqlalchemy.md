@@ -325,7 +325,6 @@ class Comment:
 
 A `session` faz o papel da "connection" do core, mas retorna objetos ORM na query.
 
-
 ```mermaid
 flowchart TD
     A@{ shape: cyl, label: "Database" } -->|Reflete| B(Base)
