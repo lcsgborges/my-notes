@@ -3,6 +3,7 @@
 > Ambiente com `python>=3.13`
 
 Os types hints não alteram por padrão o comportamento do interpretador do Python, entretanto, servem para coisas muito úteis, como:
+
 - Permitir que ferramentas como `Mypy` ou `Pyright` encontrem erros antes de rodar
 - Ativar autocomplete inteligente e mostrar docs nos editores
 - Ajudar a entender o código
