@@ -19,7 +19,7 @@ Os dois principais motivos:
 ### Programação em memória distribuída (MPI)
 
 - Programação usando processos distribuídos.
-- Decomposição do domíncio com granularidade grossa.
+- Decomposição do domínio com granularidade grossa.
 - Comunicação e sincronização por **troca de mensagens**.
 
 ## Introdução do OpenMP
@@ -51,7 +51,7 @@ Notas de compilação com **GCC**:
 gcc code.c -o code.out -fopenmp
 ```
 
-## Funções OpenMP
+### Funções OpenMP
 
 Algumas funções comuns OpenMP:
 
@@ -70,7 +70,7 @@ void omp_set_num_threads(int num_threads);
 int omp_get_num_threads();
 ```
 
-## Diretivas OpenMP
+### Diretivas OpenMP
 
 Algumas diretivas comuns OpenMP:
 
@@ -84,6 +84,14 @@ Algumas diretivas comuns OpenMP:
     #pragma omp single
 }
 ```
+
+#### Cláusula shared
+
+Especifica um conjunto de variáveis que são compartilhadas entre as threads (por padrão, as variáveis são shared ao entrar na região paralela).
+
+#### Cláusula private
+
+Especifica um conjunto de variáveis privadas. Os valores no início da região paralela são indefinidos. Ao final da região paralela, as variáveis também são desfeitas, por exemplo, o valor que ela assume ao sair da região paralela pode não ser o mesmo que ela tinha na região paralela.
 
 ### Exercício 01: Hello World em OpenMP
 
@@ -108,7 +116,7 @@ int main() {
 
 No OpenMP, podemos usar `#pragma omp for` que permite que usemos laços de repetição sem se preocupar com definir um chunk, init e end para o vetor igual no **MPI**.
 
-## Interações das Threads
+### Interações das Threads
 
 OpenMP é um modelo de _multithreading_ de memória compartilhada, portanto, threads se comunicam através de variáveis compartilhadas.
 
@@ -169,7 +177,7 @@ Assegue que uma ou mais threads estão em um estado bem definido em um ponto con
 }
 ```
 
-## Exercício 02: Vector SUM
+### Exercício 02: Vector SUM
 
 ```c
 #include <stdio.h>
@@ -199,6 +207,78 @@ int main() {
         sum += sum_local;
     }
     printf("SUM = %d\n", sum);
+    return 0;
+}
+```
+
+### Redução
+
+Combinação de variáveis locais de uma thread em uma variável única. Essa situação se chama **redução**.
+
+Diretiva reduction: `reduction(op: list_vars)`
+
+Dentro de uma região paralela ou divisão de trabalho:
+
+- Será feita uma cópia local de cada variável na lista
+- Será inicializada dependendo da operação (ex: 0 para +, 1 para *)
+- Atualizações acontecem na cópia local
+- Cópias locais são "reduzidas" para uma única variável original (global)
+
+```c
+// Exemplo:
+#pragma omp for reduction(+: sum)
+```
+
+Solução do **Vector SUM (ex 02)** com Reduction:
+
+```c
+#include <stdio.h>
+#include <omp.h>
+
+#define TAM 100000
+
+int main() {
+    int sum = 0, v[TAM];
+    for (int i = 0; i < TAM; i++)
+        v[i] = 1;
+
+    #pragma omp parallel for reduction(+: sum)
+    for (int i = 0; i < TAM; i++)
+        sum += v[i];
+
+    printf("SUM = %d\n", sum);
+    return 0;
+}
+```
+
+### Sections
+
+No contexto de programação paralela com OpenMP, `#pragma omp section` é uma diretiva de "compartilhamento de trabalho" (worksharing) usada dentro de um bloco `#pragma omp sections`. Ela divide tarefas distintas e independentes entre as threads, permitindo que cada bloco de código seja executado apenas uma vez por uma única thread, paralelizando funções diferentes:
+
+```c
+#include <stdio.h>
+#include <omp.h>
+
+int main() {
+    #pragma omp parallel 
+    // Poderia ser também:  #pragma omp parallel sections
+    {
+        #pragma omp sections
+        {
+            #pragma omp section
+            {
+                // Só 1 thread pega pra fazer essa função
+                printf("Função 1\n");
+            }
+            #pragma omp section
+            {
+                // Só 1 thread pega pra fazer essa função
+                printf("Função 2\n");
+            }
+        }
+        // Todas as threads executam essa função
+        printf("Função executada por todas threads!\n");
+    }
     return 0;
 }
 ```
